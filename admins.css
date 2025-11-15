@@ -1,0 +1,97 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: radial-gradient(circle at top left, #000814, #001d3d, #003566);
+  color: #fff;
+}
+
+/* Neon Glow Text */
+.text-glow {
+  color: #00b4d8;
+  text-shadow: 0 0 12px #00b4d8;
+}
+
+/* Glass Effect */
+.bg-dark-glass {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+}
+
+/* Buttons */
+.btn-glow {
+  background: #00b4d8;
+  color: #000;
+  border: none;
+  box-shadow: 0 0 12px #00b4d8;
+  font-weight: 600;
+}
+.btn-glow:hover {
+  box-shadow: 0 0 20px #00b4d8;
+  transform: scale(1.03);
+}
+
+/* Card Design */
+.card {
+  background: rgba(0, 0, 40, 0.7);
+  border: 1px solid #00b4d8;
+  box-shadow: 0 0 12px #00b4d8;
+  border-radius: 15px;
+}
+
+/* Admin Table */
+table {
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+table thead {
+  background: #001d3d;
+  color: #00b4d8;
+  font-size: 18px;
+}
+
+table tbody tr {
+  background: rgba(0, 20, 40, 0.7);
+}
+
+table tbody tr:hover {
+  background: rgba(0, 40, 70, 0.7);
+}
+
+table td input {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid #00b4d8;
+  color: white;
+}
+
+input.form-control {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid #00b4d8;
+  color: #fff;
+}
+
+input.form-control:focus {
+  box-shadow: 0 0 10px #00b4d8;
+}
+
+h1, h4 {
+  font-weight: 700;
+}
+
+/* Buttons inside table */
+.btn-success {
+  background: #00ffbf;
+  border: none;
+  box-shadow: 0 0 10px #00ffbf;
+  color: #000;
+  font-weight: 600;
+}
+
+.btn-danger {
+  background: #ff4d6d;
+  border: none;
+  box-shadow: 0 0 10px #ff4d6d;
+  font-weight: 600;
+}
+

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faustore Admin Dashboard</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: radial-gradient(circle at top left, #000814, #001d3d, #003566);
+      color: #fff;
+    }
+
+    /* Neon Glow Text */
+    .text-glow {
+      color: #00b4d8;
+      text-shadow: 0 0 12px #00b4d8;
+    }
+
+    /* Glass Effect */
+    .bg-dark-glass {
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(12px);
+    }
+
+    /* Buttons */
+    .btn-glow {
+      background: #00b4d8;
+      color: #000;
+      border: none;
+      box-shadow: 0 0 12px #00b4d8;
+      font-weight: 600;
+    }
+    .btn-glow:hover {
+      box-shadow: 0 0 20px #00b4d8;
+      transform: scale(1.03);
+    }
+
+    /* Card Design */
+    .card {
+      background: rgba(0, 0, 40, 0.7);
+      border: 1px solid #00b4d8;
+      box-shadow: 0 0 12px #00b4d8;
+      border-radius: 15px;
+    }
+
+    /* Admin Table */
+    table {
+      border-radius: 15px;
+      overflow: hidden;
+    }
+    table thead {
+      background: #001d3d;
+      color: #00b4d8;
+      font-size: 18px;
+    }
+    table tbody tr {
+      background: rgba(0, 20, 40, 0.7);
+    }
+    table tbody tr:hover {
+      background: rgba(0, 40, 70, 0.7);
+    }
+    table td input {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid #00b4d8;
+      color: white;
+    }
+
+    input.form-control {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid #00b4d8;
+      color: #fff;
+    }
+    input.form-control:focus {
+      box-shadow: 0 0 10px #00b4d8;
+    }
+
+    h1, h4 {
+      font-weight: 700;
+    }
+
+    /* Buttons inside table */
+    .btn-success {
+      background: #00ffbf;
+      border: none;
+      box-shadow: 0 0 10px #00ffbf;
+      color: #000;
+      font-weight: 600;
+    }
+    .btn-danger {
+      background: #ff4d6d;
+      border: none;
+      box-shadow: 0 0 10px #ff4d6d;
+      font-weight: 600;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container py-5">
+
+  <!-- Back Button -->
+  <div class="text-center mb-4">
+    <button class="btn btn-glow" onclick="goBack()">⬅ Back to Store</button>
+  </div>
+
+  <h1 class="text-center text-glow mb-4">⚙ Admin Dashboard</h1>
+  <h4 class="text-center mb-5">Manage Products</h4>
+
+  <!-- ADD PRODUCT FORM -->
+  <div class="card p-4 mb-4">
+    <h4 class="text-glow">Add Product</h4>
+
+    <div class="row mt-3">
+      <div class="col-md-4">
+        <input id="pName" type="text" class="form-control" placeholder="Product Name">
+      </div>
+      <div class="col-md-4">
+        <input id="pPrice" type="number" class="form-control" placeholder="Price">
+      </div>
+      <div class="col-md-4">
+        <input id="pImg" type="text" class="form-control" placeholder="Image URL">
+      </div>
+    </div>
+
+    <button class="btn btn-glow mt-3" onclick="addProduct()">Add Product</button>
+  </div>
+
+  <!-- PRODUCT TABLE -->
+  <div class="card p-4">
+    <h4 class="text-glow mb-3">Product List</h4>
+
+    <table class="table table-dark table-bordered text-center align-middle">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Image</th>
+          <th>Name</th>
+          <th>Price</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="productTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  // ============================================
+  // BACK BUTTON
+  // ============================================
+  function goBack() {
+    window.location.href = "index.html"; // change if your main page has a different name
+  }
+
+  // ============================================
+  // LOAD PRODUCTS FROM LOCALSTORAGE
+  // ============================================
+  let products = JSON.parse(localStorage.getItem("faustoreProducts")) || [
+    { id: 1, name: "Wireless Headphones", price: 899, img: "https://picsum.photos/300?random=11" },
+    { id: 2, name: "Smart Watch", price: 1299, img: "https://picsum.photos/300?random=22" },
+    { id: 3, name: "Gaming Mouse", price: 499, img: "https://picsum.photos/300?random=33" }
+  ];
+
+  function saveProducts() {
+    localStorage.setItem("faustoreProducts", JSON.stringify(products));
+  }
+
+  // ============================================
+  // DISPLAY TABLE
+  // ============================================
+  function loadTable() {
+    let table = document.getElementById("productTable");
+    table.innerHTML = "";
+
+    products.forEach((p, index) => {
+      table.innerHTML += `
+        <tr>
+          <td>${p.id}</td>
+          <td><img src="${p.img}" width="60" class="rounded"></td>
+          <td><input id="name-${index}" class="form-control" value="${p.name}"></td>
+          <td><input id="price-${index}" class="form-control" type="number" value="${p.price}"></td>
+          <td>
+            <button class="btn btn-success btn-sm" onclick="updateProduct(${index})">Update</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteProduct(${index})">Delete</button>
+          </td>
+        </tr>
+      `;
+    });
+  }
+
+  loadTable();
+
+  // ============================================
+  // ADD PRODUCT
+  // ============================================
+  function addProduct() {
+    let name = document.getElementById("pName").value;
+    let price = document.getElementById("pPrice").value;
+    let img = document.getElementById("pImg").value;
+
+    if (!name || !price || !img) {
+      alert("Please fill all fields!");
+      return;
+    }
+
+    let newProduct = {
+      id: products.length + 1,
+      name,
+      price: Number(price),
+      img
+    };
+
+    products.push(newProduct);
+    saveProducts();
+    loadTable();
+
+    document.getElementById("pName").value = "";
+    document.getElementById("pPrice").value = "";
+    document.getElementById("pImg").value = "";
+
+    alert("Product Added!");
+  }
+
+  // ============================================
+  // UPDATE PRODUCT
+  // ============================================
+  function updateProduct(index) {
+    let newName = document.getElementById(`name-${index}`).value;
+    let newPrice = document.getElementById(`price-${index}`).value;
+
+    products[index].name = newName;
+    products[index].price = Number(newPrice);
+
+    saveProducts();
+    alert("Product Updated!");
+  }
+
+  // ============================================
+  // DELETE PRODUCT
+  // ============================================
+  function deleteProduct(index) {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+
+    products.splice(index, 1);
+
+    // reassign IDs
+    products = products.map((p, i) => ({ ...p, id: i + 1 }));
+
+    saveProducts();
+    loadTable();
+    alert("Product Deleted!");
+  }
+</script>
+
+</body>
+</html>
