@@ -1,52 +1,60 @@
 /* ===============================
-   FAUSTORE DEFAULT PRODUCTS
-================================*/
-let products = JSON.parse(localStorage.getItem("faustoreProducts")) || [
-  { id: 1, name: "Wireless Headphones", price: 59, img: "https://picsum.photos/300?random=1" },
-  { id: 2, name: "Smart Watch", price: 120, img: "https://picsum.photos/300?random=2" },
-  { id: 3, name: "Gaming Mouse", price: 35, img: "https://picsum.photos/300?random=3" }
-];
-
-// Save to localStorage
-localStorage.setItem("faustoreProducts", JSON.stringify(products));
-
-/* ===============================
-   DISPLAY PRODUCTS
-================================*/
-function loadProducts() {
-  const container = document.getElementById("productList");
-  container.innerHTML = "";
-
-  products.forEach(p => {
-    container.innerHTML += `
-      <div class="col-md-4 mb-4">
-        <div class="card text-light">
-          <img src="${p.img}" class="card-img-top">
-          <div class="card-body">
-            <h5 class="card-title">${p.name}</h5>
-            <p class="card-text">₱${p.price}</p>
-            <button class="btn btn-glow w-100" onclick="addToCart(${p.id})">Add to Cart</button>
-          </div>
-        </div>
-      </div>
-    `;
-  });
-}
-
-loadProducts();
-
-/* ===============================
-   CART SYSTEM
+   GLOBAL VARIABLES
 ================================*/
 let cart = JSON.parse(localStorage.getItem("faustoreCart")) || [];
 updateCartCount();
 
+// Store fetched products globally
+let products = [];
+
+// Users & current user
+let currentUser = localStorage.getItem("faustoreCurrentUser");
+updateAuthUI();
+
+/* ===============================
+   LOAD PRODUCTS FROM SERVER
+================================*/
+async function loadProducts() {
+  const API_URL = "http://localhost:5000/api/products"; // your server endpoint
+  try {
+    const res = await fetch(API_URL);
+    products = await res.json(); // save globally
+
+    const container = document.getElementById("productList");
+    container.innerHTML = "";
+
+    products.forEach(p => {
+      const col = document.createElement("div");
+      col.className = "col-md-4 mb-4";
+
+      col.innerHTML = `
+        <div class="card bg-dark-glass h-100 text-light">
+          <img src="${p.img}" class="card-img-top" alt="${p.name}">
+          <div class="card-body">
+            <h5 class="card-title">${p.name}</h5>
+            <p class="card-text">₱${p.price.toLocaleString()}</p>
+            <button class="btn btn-glow w-100" onclick="addToCart('${p._id}')">
+              Add to Cart
+            </button>
+          </div>
+        </div>
+      `;
+      container.appendChild(col);
+    });
+  } catch (err) {
+    console.error("Error loading products:", err);
+  }
+}
+
+/* ===============================
+   CART SYSTEM
+================================*/
 function addToCart(id) {
-  const item = products.find(p => p.id === id);
+  const item = products.find(p => p._id === id);
+  if (!item) return alert("Product not found.");
+
   cart.push(item);
-
   localStorage.setItem("faustoreCart", JSON.stringify(cart));
-
   updateCartCount();
   alert(`${item.name} added to cart!`);
 }
@@ -87,46 +95,70 @@ function removeCartItem(i) {
 /* ===============================
    AUTH: SIGN IN / SIGN UP
 ================================*/
-let users = JSON.parse(localStorage.getItem("faustoreUsers")) || [];
-let currentUser = localStorage.getItem("faustoreCurrentUser");
-
-updateAuthUI();
-
-function signUp() {
+async function signUp() {
   const email = document.getElementById("email").value;
   const pass = document.getElementById("password").value;
 
   if (!email || !pass) return alert("Please fill all fields.");
 
-  if (users.find(u => u.email === email)) {
-    return alert("Email already exists.");
+  try {
+    const res = await fetch("http://localhost:5000/api/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password: pass }) // optionally add name
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      return alert(data.error || "Failed to create account.");
+    }
+
+    alert(data.message || "Account created! You can now sign in.");
+    document.getElementById("email").value = "";
+    document.getElementById("password").value = "";
+
+  } catch (err) {
+    console.error("SignUp Error:", err);
+    alert("Something went wrong.");
   }
-
-  users.push({ email, password: pass });
-  localStorage.setItem("faustoreUsers", JSON.stringify(users));
-
-  alert("Account created! You can now sign in.");
 }
 
-function signIn() {
+async function signIn() {
   const email = document.getElementById("email").value;
   const pass = document.getElementById("password").value;
 
-  const user = users.find(u => u.email === email && u.password === pass);
+  if (!email || !pass) return alert("Please fill all fields.");
 
-  if (!user) return alert("Incorrect email or password.");
+  try {
+    const res = await fetch("http://localhost:5000/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password: pass })
+    });
 
-  currentUser = email;
-  localStorage.setItem("faustoreCurrentUser", email);
+    const data = await res.json();
 
-  updateAuthUI();
-  alert("Signed in!");
+    if (!res.ok) {
+      return alert(data.error || "Login failed.");
+    }
+
+    currentUser = data.user.email;
+    localStorage.setItem("faustoreCurrentUser", currentUser);
+    updateAuthUI();
+    alert("Signed in successfully!");
+    document.getElementById("email").value = "";
+    document.getElementById("password").value = "";
+
+  } catch (err) {
+    console.error("SignIn Error:", err);
+    alert("Something went wrong.");
+  }
 }
 
 function signOut() {
   localStorage.removeItem("faustoreCurrentUser");
   currentUser = null;
-
   updateAuthUI();
 }
 
@@ -147,13 +179,11 @@ function updateAuthUI() {
    ADMIN PAGE BUTTON (ADMIN LOGIN REQUIRED)
 ================================*/
 function openAdmin() {
-  // Check if a user is signed in
   if (!currentUser) {
     alert("You must be signed in to access the admin dashboard!");
     return;
   }
 
-  // Prompt for admin credentials
   const adminEmail = prompt("Enter admin email:");
   const adminPass = prompt("Enter admin password:");
 
@@ -164,3 +194,6 @@ function openAdmin() {
     alert("Access denied! Invalid admin credentials.");
   }
 }
+
+// Call loadProducts on page load
+loadProducts();
