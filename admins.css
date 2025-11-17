@@ -25,6 +25,7 @@ body {
   border: none;
   box-shadow: 0 0 12px #00b4d8;
   font-weight: 600;
+  transition: all 0.2s ease-in-out;
 }
 .btn-glow:hover {
   box-shadow: 0 0 20px #00b4d8;
@@ -37,12 +38,15 @@ body {
   border: 1px solid #00b4d8;
   box-shadow: 0 0 12px #00b4d8;
   border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 20px;
 }
 
 /* Admin Table */
 table {
   border-radius: 15px;
   overflow: hidden;
+  width: 100%;
 }
 
 table thead {
@@ -53,6 +57,7 @@ table thead {
 
 table tbody tr {
   background: rgba(0, 20, 40, 0.7);
+  transition: background 0.2s;
 }
 
 table tbody tr:hover {
@@ -62,7 +67,10 @@ table tbody tr:hover {
 table td input {
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid #00b4d8;
-  color: white;
+  color: #fff;
+  width: 100%;
+  padding: 5px;
+  border-radius: 5px;
 }
 
 input.form-control {
@@ -73,10 +81,12 @@ input.form-control {
 
 input.form-control:focus {
   box-shadow: 0 0 10px #00b4d8;
+  outline: none;
 }
 
 h1, h4 {
   font-weight: 700;
+  margin-bottom: 20px;
 }
 
 /* Buttons inside table */
@@ -95,3 +105,6 @@ h1, h4 {
   font-weight: 600;
 }
 
+img {
+  border-radius: 5px;
+}
