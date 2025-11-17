@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Faustore Admin Dashboard</title>
 
+  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
   <style>
@@ -16,19 +17,16 @@
       color: #fff;
     }
 
-    /* Neon Glow Text */
     .text-glow {
       color: #00b4d8;
       text-shadow: 0 0 12px #00b4d8;
     }
 
-    /* Glass Effect */
     .bg-dark-glass {
       background: rgba(0, 0, 0, 0.3);
       backdrop-filter: blur(12px);
     }
 
-    /* Buttons */
     .btn-glow {
       background: #00b4d8;
       color: #000;
@@ -41,7 +39,6 @@
       transform: scale(1.03);
     }
 
-    /* Card Design */
     .card {
       background: rgba(0, 0, 40, 0.7);
       border: 1px solid #00b4d8;
@@ -49,7 +46,6 @@
       border-radius: 15px;
     }
 
-    /* Admin Table */
     table {
       border-radius: 15px;
       overflow: hidden;
@@ -84,7 +80,6 @@
       font-weight: 700;
     }
 
-    /* Buttons inside table */
     .btn-success {
       background: #00ffbf;
       border: none;
@@ -102,9 +97,7 @@
 </head>
 
 <body>
-
 <div class="container py-5">
-
   <!-- Back Button -->
   <div class="text-center mb-4">
     <button class="btn btn-glow" onclick="goBack()">⬅ Back to Store</button>
@@ -116,7 +109,6 @@
   <!-- ADD PRODUCT FORM -->
   <div class="card p-4 mb-4">
     <h4 class="text-glow">Add Product</h4>
-
     <div class="row mt-3">
       <div class="col-md-4">
         <input id="pName" type="text" class="form-control" placeholder="Product Name">
@@ -128,14 +120,12 @@
         <input id="pImg" type="text" class="form-control" placeholder="Image URL">
       </div>
     </div>
-
     <button class="btn btn-glow mt-3" onclick="addProduct()">Add Product</button>
   </div>
 
   <!-- PRODUCT TABLE -->
   <div class="card p-4">
     <h4 class="text-glow mb-3">Product List</h4>
-
     <table class="table table-dark table-bordered text-center align-middle">
       <thead>
         <tr>
@@ -152,112 +142,121 @@
 </div>
 
 <script>
-  // ============================================
-  // BACK BUTTON
-  // ============================================
-  function goBack() {
-    window.location.href = "index.html"; // change if your main page has a different name
-  }
+const API_URL = "http://localhost:5000/api/products";
 
-  // ============================================
-  // LOAD PRODUCTS FROM LOCALSTORAGE
-  // ============================================
-  let products = JSON.parse(localStorage.getItem("faustoreProducts")) || [
-    { id: 1, name: "Wireless Headphones", price: 899, img: "https://picsum.photos/300?random=11" },
-    { id: 2, name: "Smart Watch", price: 1299, img: "https://picsum.photos/300?random=22" },
-    { id: 3, name: "Gaming Mouse", price: 499, img: "https://picsum.photos/300?random=33" }
-  ];
+// ============================================
+// BACK BUTTON
+// ============================================
+function goBack() {
+  window.location.href = "index.html"; 
+}
 
-  function saveProducts() {
-    localStorage.setItem("faustoreProducts", JSON.stringify(products));
-  }
-
-  // ============================================
-  // DISPLAY TABLE
-  // ============================================
-  function loadTable() {
-    let table = document.getElementById("productTable");
+// ============================================
+// LOAD PRODUCTS FROM SERVER
+// ============================================
+async function loadTable() {
+  try {
+    const res = await fetch(API_URL);
+    const products = await res.json();
+    const table = document.getElementById("productTable");
     table.innerHTML = "";
-
     products.forEach((p, index) => {
       table.innerHTML += `
         <tr>
-          <td>${p.id}</td>
+          <td>${index + 1}</td>
           <td><img src="${p.img}" width="60" class="rounded"></td>
-          <td><input id="name-${index}" class="form-control" value="${p.name}"></td>
-          <td><input id="price-${index}" class="form-control" type="number" value="${p.price}"></td>
+          <td><input id="name-${p._id}" class="form-control" value="${p.name}"></td>
+          <td><input id="price-${p._id}" class="form-control" type="number" value="${p.price}"></td>
           <td>
-            <button class="btn btn-success btn-sm" onclick="updateProduct(${index})">Update</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteProduct(${index})">Delete</button>
+            <button class="btn btn-success btn-sm" onclick="updateProduct('${p._id}')">Update</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p._id}')">Delete</button>
           </td>
         </tr>
       `;
     });
+  } catch (err) {
+    console.error("Error loading products:", err);
+    alert("Failed to load products. Check server connection.");
+  }
+}
+
+// Initial table load
+loadTable();
+
+// ============================================
+// ADD PRODUCT
+// ============================================
+async function addProduct() {
+  const name = document.getElementById("pName").value;
+  const price = document.getElementById("pPrice").value;
+  const img = document.getElementById("pImg").value;
+
+  if (!name || !price || !img) {
+    alert("Please fill all fields!");
+    return;
   }
 
-  loadTable();
-
-  // ============================================
-  // ADD PRODUCT
-  // ============================================
-  function addProduct() {
-    let name = document.getElementById("pName").value;
-    let price = document.getElementById("pPrice").value;
-    let img = document.getElementById("pImg").value;
-
-    if (!name || !price || !img) {
-      alert("Please fill all fields!");
-      return;
-    }
-
-    let newProduct = {
-      id: products.length + 1,
-      name,
-      price: Number(price),
-      img
-    };
-
-    products.push(newProduct);
-    saveProducts();
-    loadTable();
-
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, price: Number(price), img })
+    });
+    const data = await res.json();
+    alert(data.message || "Product Added!");
     document.getElementById("pName").value = "";
     document.getElementById("pPrice").value = "";
     document.getElementById("pImg").value = "";
-
-    alert("Product Added!");
-  }
-
-  // ============================================
-  // UPDATE PRODUCT
-  // ============================================
-  function updateProduct(index) {
-    let newName = document.getElementById(`name-${index}`).value;
-    let newPrice = document.getElementById(`price-${index}`).value;
-
-    products[index].name = newName;
-    products[index].price = Number(newPrice);
-
-    saveProducts();
-    alert("Product Updated!");
-  }
-
-  // ============================================
-  // DELETE PRODUCT
-  // ============================================
-  function deleteProduct(index) {
-    if (!confirm("Are you sure you want to delete this product?")) return;
-
-    products.splice(index, 1);
-
-    // reassign IDs
-    products = products.map((p, i) => ({ ...p, id: i + 1 }));
-
-    saveProducts();
     loadTable();
-    alert("Product Deleted!");
+  } catch (err) {
+    console.error("Error adding product:", err);
+    alert("Failed to add product. Check server connection.");
   }
-</script>
+}
 
+// ============================================
+// UPDATE PRODUCT
+// ============================================
+async function updateProduct(id) {
+  const newName = document.getElementById(`name-${id}`).value;
+  const newPrice = document.getElementById(`price-${id}`).value;
+
+  if (!newName || !newPrice) {
+    alert("Please provide both name and price.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newName, price: Number(newPrice) })
+    });
+    const data = await res.json();
+    alert(data.message || "Product Updated!");
+    loadTable();
+  } catch (err) {
+    console.error("Error updating product:", err);
+    alert("Failed to update product. Check server connection.");
+  }
+}
+
+// ============================================
+// DELETE PRODUCT
+// ============================================
+async function deleteProduct(id) {
+  if (!confirm("Are you sure you want to delete this product?")) return;
+
+  try {
+    const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+    const data = await res.json();
+    alert(data.message || "Product Deleted!");
+    loadTable();
+  } catch (err) {
+    console.error("Error deleting product:", err);
+    alert("Failed to delete product. Check server connection.");
+  }
+}
+</script>
 </body>
 </html>
