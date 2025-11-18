@@ -1,7 +1,7 @@
 // ============================================
 // API URL (your live backend)
 // ============================================
-const API_URL = "https://faustore.onrender.com/api/products";
+const API_URL = "https://mongodb-crud-api-vgdb.onrender.com/api/products";
 
 // Global product storage
 let products = [];
@@ -140,3 +140,4 @@ async function deleteProduct(id) {
     alert("Could not delete product.");
   }
 }
+
