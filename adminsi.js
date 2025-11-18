@@ -1,52 +1,55 @@
 // ============================================
-// Load existing products from main store
+// API URL (your live backend)
 // ============================================
-let products = JSON.parse(localStorage.getItem("faustoreProducts")) || [
-  { id: 1, name: "Wireless Headphones", price: 899, img: "https://picsum.photos/300?random=11" },
-  { id: 2, name: "Smart Watch", price: 1299, img: "https://picsum.photos/300?random=22" },
-  { id: 3, name: "Gaming Mouse", price: 499, img: "https://picsum.photos/300?random=33" }
-];
+const API_URL = "https://faustore.onrender.com/api/products";
 
-function saveProducts() {
-  localStorage.setItem("faustoreProducts", JSON.stringify(products));
-}
+// Global product storage
+let products = [];
 
 // ============================================
-// Load table
+// Load table from MongoDB
 // ============================================
-function loadTable() {
+async function loadTable() {
   let table = document.getElementById("productTable");
   table.innerHTML = "";
 
-  products.forEach((p, index) => {
-    table.innerHTML += `
-      <tr>
-        <td>${p.id}</td>
-        <td><img src="${p.img}" width="60" class="rounded"></td>
+  try {
+    const res = await fetch(API_URL);
+    products = await res.json();
 
-        <td>
-          <input id="name-${index}" class="form-control" value="${p.name}">
-        </td>
+    products.forEach((p, index) => {
+      table.innerHTML += `
+        <tr>
+          <td>${p._id}</td>
+          <td><img src="${p.img}" width="60" class="rounded"></td>
 
-        <td>
-          <input id="price-${index}" class="form-control" type="number" value="${p.price}">
-        </td>
+          <td>
+            <input id="name-${index}" class="form-control" value="${p.name}">
+          </td>
 
-        <td>
-          <button class="btn btn-success btn-sm" onclick="updateProduct(${index})">Update</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteProduct(${index})">Delete</button>
-        </td>
-      </tr>
-    `;
-  });
+          <td>
+            <input id="price-${index}" class="form-control" type="number" value="${p.price}">
+          </td>
+
+          <td>
+            <button class="btn btn-success btn-sm" onclick="updateProduct(${index})">Update</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p._id}')">Delete</button>
+          </td>
+        </tr>
+      `;
+    });
+  } catch (err) {
+    console.error("Error loading products:", err);
+    alert("Failed to load products.");
+  }
 }
 
 loadTable();
 
 // ============================================
-// Add Product
+// Add Product (POST MongoDB)
 // ============================================
-function addProduct() {
+async function addProduct() {
   let name = document.getElementById("pName").value;
   let price = document.getElementById("pPrice").value;
   let img = document.getElementById("pImg").value;
@@ -56,55 +59,84 @@ function addProduct() {
     return;
   }
 
-  let newProduct = {
-    id: products.length + 1,
-    name,
-    price: Number(price),
-    img
-  };
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, price: Number(price), img })
+    });
 
-  products.push(newProduct);
-  saveProducts();
-  loadTable();
+    const data = await res.json();
 
-  document.getElementById("pName").value = "";
-  document.getElementById("pPrice").value = "";
-  document.getElementById("pImg").value = "";
+    if (!res.ok) {
+      alert(data.error || "Failed to add product");
+      return;
+    }
 
-  alert("Product Added!");
+    alert("Product Added!");
+    loadTable();
+
+    document.getElementById("pName").value = "";
+    document.getElementById("pPrice").value = "";
+    document.getElementById("pImg").value = "";
+
+  } catch (err) {
+    console.error("Add error:", err);
+    alert("Could not add product.");
+  }
 }
 
 // ============================================
-// Update Product
+// Update Product (PUT MongoDB)
 // ============================================
-function updateProduct(index) {
+async function updateProduct(index) {
   let newName = document.getElementById(`name-${index}`).value;
   let newPrice = document.getElementById(`price-${index}`).value;
 
-  products[index].name = newName;
-  products[index].price = Number(newPrice);
+  const id = products[index]._id;
 
-  saveProducts();
+  try {
+    const res = await fetch(`${API_URL}/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newName, price: Number(newPrice) })
+    });
 
-  alert("Product Updated!");
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || "Update failed");
+      return;
+    }
+
+    alert("Product Updated!");
+    loadTable();
+  } catch (err) {
+    console.error("Update error:", err);
+    alert("Could not update product.");
+  }
 }
 
 // ============================================
-// Delete Product
+// Delete Product (DELETE MongoDB)
 // ============================================
-function deleteProduct(index) {
+async function deleteProduct(id) {
   if (!confirm("Are you sure you want to delete this product?")) return;
 
-  products.splice(index, 1);
+  try {
+    const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
 
-  // reassign IDs
-  products = products.map((p, i) => ({
-    ...p,
-    id: i + 1
-  }));
+    const data = await res.json();
 
-  saveProducts();
-  loadTable();
+    if (!res.ok) {
+      alert(data.error || "Delete failed");
+      return;
+    }
 
-  alert("Product Deleted!");
+    alert("Product Deleted!");
+    loadTable();
+  } catch (err) {
+    console.error("Delete error:", err);
+    alert("Could not delete product.");
+  }
 }
