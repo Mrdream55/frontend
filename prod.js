@@ -80,7 +80,7 @@ async function loadCart() {
   if (!currentUser) return;
 
   const res = await fetch(
-    `https://faustore.onrender.com/api/cart/${currentUser}`
+    `https://mongodb-crud-api-vgdb.onrender.com/api/cart/${currentUser}`
   );
 
   cart = await res.json();
@@ -228,4 +228,3 @@ function openAdmin() {
 ================================*/
 loadProducts();
 loadCart();
-
