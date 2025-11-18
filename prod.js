@@ -1,24 +1,25 @@
 /* ===============================
    GLOBAL VARIABLES
 ================================*/
-let cart = JSON.parse(localStorage.getItem("faustoreCart")) || [];
-updateCartCount();
+
+// Cart stored in MongoDB (not localStorage)
+let cart = []; 
 
 // Store fetched products globally
 let products = [];
 
-// Users & current user
-let currentUser = localStorage.getItem("faustoreCurrentUser");
+// Logged user (fetched from server or memory variable)
+let currentUser = null;
 updateAuthUI();
 
 /* ===============================
    LOAD PRODUCTS FROM SERVER
 ================================*/
 async function loadProducts() {
-  const API_URL = "https://faustore.onrender.com/api/products"; // your server endpoint
+  const API_URL = "https://faustore.onrender.com/api/products"; 
   try {
     const res = await fetch(API_URL);
-    products = await res.json(); // save globally
+    products = await res.json(); 
 
     const container = document.getElementById("productList");
     container.innerHTML = "";
@@ -47,16 +48,43 @@ async function loadProducts() {
 }
 
 /* ===============================
-   CART SYSTEM
+   CART SYSTEM (NEW: SERVER-BASED)
 ================================*/
-function addToCart(id) {
+async function addToCart(id) {
+  if (!currentUser) return alert("You must sign in first!");
+
   const item = products.find(p => p._id === id);
   if (!item) return alert("Product not found.");
 
-  cart.push(item);
-  localStorage.setItem("faustoreCart", JSON.stringify(cart));
+  try {
+    const res = await fetch("https://faustore.onrender.com/api/cart/add", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user: currentUser, productId: id })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) return alert(data.error);
+
+    cart = data.cart; 
+    updateCartCount();
+    alert(`${item.name} added to cart!`);
+
+  } catch (err) {
+    console.error("Cart Error:", err);
+  }
+}
+
+async function loadCart() {
+  if (!currentUser) return;
+
+  const res = await fetch(
+    `https://faustore.onrender.com/api/cart/${currentUser}`
+  );
+
+  cart = await res.json();
   updateCartCount();
-  alert(`${item.name} added to cart!`);
 }
 
 function updateCartCount() {
@@ -76,7 +104,7 @@ function showCart() {
     ul.innerHTML += `
       <li class="mb-2">
         ${item.name} - ₱${item.price}
-        <button class="btn btn-sm btn-danger float-end" onclick="removeCartItem(${index})">X</button>
+        <button class="btn btn-sm btn-danger float-end" onclick="removeCartItem('${item._id}')">X</button>
       </li>
     `;
     total += item.price;
@@ -85,9 +113,15 @@ function showCart() {
   document.getElementById("cartTotal").textContent = total;
 }
 
-function removeCartItem(i) {
-  cart.splice(i, 1);
-  localStorage.setItem("faustoreCart", JSON.stringify(cart));
+async function removeCartItem(id) {
+  const res = await fetch("https://faustore.onrender.com/api/cart/remove", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user: currentUser, productId: id })
+  });
+
+  const data = await res.json();
+  cart = data.cart;
   showCart();
   updateCartCount();
 }
@@ -96,6 +130,7 @@ function removeCartItem(i) {
    AUTH: SIGN IN / SIGN UP
 ================================*/
 async function signUp() {
+  const name = document.getElementById("name")?.value || "";
   const email = document.getElementById("email").value;
   const pass = document.getElementById("password").value;
 
@@ -105,22 +140,16 @@ async function signUp() {
     const res = await fetch("https://faustore.onrender.com/api/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password: pass }) // optionally add name
+      body: JSON.stringify({ name, email, password: pass })
     });
 
     const data = await res.json();
 
-    if (!res.ok) {
-      return alert(data.error || "Failed to create account.");
-    }
+    if (!res.ok) return alert(data.error);
 
-    alert(data.message || "Account created! You can now sign in.");
-    document.getElementById("email").value = "";
-    document.getElementById("password").value = "";
-
+    alert("Account created! Please sign in.");
   } catch (err) {
     console.error("SignUp Error:", err);
-    alert("Something went wrong.");
   }
 }
 
@@ -131,7 +160,7 @@ async function signIn() {
   if (!email || !pass) return alert("Please fill all fields.");
 
   try {
-    const res = await fetch("https://faustore.onrender.com/api/users", {
+    const res = await fetch("https://faustore.onrender.com/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password: pass })
@@ -139,29 +168,29 @@ async function signIn() {
 
     const data = await res.json();
 
-    if (!res.ok) {
-      return alert(data.error || "Login failed.");
-    }
+    if (!res.ok) return alert(data.error);
 
     currentUser = data.user.email;
-    localStorage.setItem("faustoreCurrentUser", currentUser);
     updateAuthUI();
-    alert("Signed in successfully!");
-    document.getElementById("email").value = "";
-    document.getElementById("password").value = "";
+    loadCart(); 
+
+    alert("Signed in successfully! 🎉");
 
   } catch (err) {
     console.error("SignIn Error:", err);
-    alert("Something went wrong.");
   }
 }
 
 function signOut() {
-  localStorage.removeItem("faustoreCurrentUser");
   currentUser = null;
+  cart = [];
   updateAuthUI();
+  updateCartCount();
 }
 
+/* ===============================
+   AUTH UI UPDATE
+================================*/
 function updateAuthUI() {
   const signInUpBtn = document.getElementById("signInUpBtn");
   const signOutBtn = document.getElementById("signOutBtn");
@@ -176,24 +205,26 @@ function updateAuthUI() {
 }
 
 /* ===============================
-   ADMIN PAGE BUTTON (ADMIN LOGIN REQUIRED)
+   ADMIN PAGE LOGIN
 ================================*/
 function openAdmin() {
   if (!currentUser) {
-    alert("You must be signed in to access the admin dashboard!");
+    alert("Sign in first!");
     return;
   }
 
-  const adminEmail = prompt("Enter admin email:");
-  const adminPass = prompt("Enter admin password:");
+  const adminEmail = prompt("Admin email:");
+  const adminPass = prompt("Admin password:");
 
   if (adminEmail === "admin" && adminPass === "123") {
-    alert("Welcome Admin! Redirecting to Admin Page...");
     window.location.href = "admin.html";
   } else {
-    alert("Access denied! Invalid admin credentials.");
+    alert("Invalid admin credentials.");
   }
 }
 
-// Call loadProducts on page load
+/* ===============================
+   INIT
+================================*/
 loadProducts();
+loadCart();
