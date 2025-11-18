@@ -16,7 +16,7 @@ updateAuthUI();
    LOAD PRODUCTS FROM SERVER
 ================================*/
 async function loadProducts() {
-  const API_URL = "https://faustore.onrender.com/api/products"; 
+  const API_URL = "https://mongodb-crud-api-vgdb.onrender.com/api/products"; 
   try {
     const res = await fetch(API_URL);
     products = await res.json(); 
@@ -57,7 +57,7 @@ async function addToCart(id) {
   if (!item) return alert("Product not found.");
 
   try {
-    const res = await fetch("https://faustore.onrender.com/api/cart/add", {
+    const res = await fetch("https://mongodb-crud-api-vgdb.onrender.com/api/cart/add", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user: currentUser, productId: id })
@@ -114,7 +114,7 @@ function showCart() {
 }
 
 async function removeCartItem(id) {
-  const res = await fetch("https://faustore.onrender.com/api/cart/remove", {
+  const res = await fetch("https://mongodb-crud-api-vgdb.onrender.com/api/cart/remove", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ user: currentUser, productId: id })
@@ -137,7 +137,7 @@ async function signUp() {
   if (!email || !pass) return alert("Please fill all fields.");
 
   try {
-    const res = await fetch("https://faustore.onrender.com/api/users", {
+    const res = await fetch("https://mongodb-crud-api-vgdb.onrender.com/api/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password: pass })
@@ -160,7 +160,7 @@ async function signIn() {
   if (!email || !pass) return alert("Please fill all fields.");
 
   try {
-    const res = await fetch("https://faustore.onrender.com/api/login", {
+    const res = await fetch("https://mongodb-crud-api-vgdb.onrender.com/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password: pass })
@@ -228,3 +228,4 @@ function openAdmin() {
 ================================*/
 loadProducts();
 loadCart();
+
