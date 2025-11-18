@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Faustore Admin Dashboard</title>
 
-  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
   <style>
@@ -22,11 +21,6 @@
       text-shadow: 0 0 12px #00b4d8;
     }
 
-    .bg-dark-glass {
-      background: rgba(0, 0, 0, 0.3);
-      backdrop-filter: blur(12px);
-    }
-
     .btn-glow {
       background: #00b4d8;
       color: #000;
@@ -34,72 +28,35 @@
       box-shadow: 0 0 12px #00b4d8;
       font-weight: 600;
     }
-    .btn-glow:hover {
-      box-shadow: 0 0 20px #00b4d8;
-      transform: scale(1.03);
-    }
 
     .card {
       background: rgba(0, 0, 40, 0.7);
+      border-radius: 15px;
       border: 1px solid #00b4d8;
       box-shadow: 0 0 12px #00b4d8;
-      border-radius: 15px;
     }
 
-    table {
-      border-radius: 15px;
-      overflow: hidden;
-    }
     table thead {
       background: #001d3d;
       color: #00b4d8;
       font-size: 18px;
     }
+
     table tbody tr {
       background: rgba(0, 20, 40, 0.7);
     }
-    table tbody tr:hover {
-      background: rgba(0, 40, 70, 0.7);
-    }
+
     table td input {
       background: rgba(0, 0, 0, 0.4);
       border: 1px solid #00b4d8;
       color: white;
-    }
-
-    input.form-control {
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid #00b4d8;
-      color: #fff;
-    }
-    input.form-control:focus {
-      box-shadow: 0 0 10px #00b4d8;
-    }
-
-    h1, h4 {
-      font-weight: 700;
-    }
-
-    .btn-success {
-      background: #00ffbf;
-      border: none;
-      box-shadow: 0 0 10px #00ffbf;
-      color: #000;
-      font-weight: 600;
-    }
-
-    .btn-danger {
-      background: #ff4d6d;
-      border: none;
-      box-shadow: 0 0 10px #ff4d6d;
-      font-weight: 600;
     }
   </style>
 </head>
 
 <body>
 <div class="container py-5">
-  <!-- Back Button -->
+
   <div class="text-center mb-4">
     <button class="btn btn-glow" onclick="goBack()">⬅ Back to Store</button>
   </div>
@@ -143,58 +100,66 @@
 </div>
 
 <script>
-// =====================
-// CONFIG
-// =====================
+// ============================================
+// API URL
+// ============================================
 const API_URL = "https://faustore.onrender.com/api/products";
 
-// =====================
-// BACK BUTTON
-// =====================
+// Global product list
+let products = [];
+
+// Back button
 function goBack() {
-  window.location.href = "index.html"; 
+  window.location.href = "index.html";
 }
 
-// =====================
-// LOAD PRODUCTS
-// =====================
+// ============================================
+// Load Table From Backend
+// ============================================
 async function loadTable() {
+  let table = document.getElementById("productTable");
+  table.innerHTML = "";
+
   try {
     const res = await fetch(API_URL);
-    const products = await res.json();
-
-    const table = document.getElementById("productTable");
-    table.innerHTML = "";
+    products = await res.json();
 
     products.forEach((p, index) => {
       table.innerHTML += `
         <tr>
-          <td>${index + 1}</td>
+          <td>${p._id}</td>
           <td><img src="${p.img}" width="60" class="rounded"></td>
-          <td><input id="name-${p._id}" class="form-control" value="${p.name}"></td>
-          <td><input id="price-${p._id}" class="form-control" type="number" value="${p.price}"></td>
+
           <td>
-            <button class="btn btn-success btn-sm" onclick="updateProduct('${p._id}')">Update</button>
+            <input id="name-${index}" class="form-control" value="${p.name}">
+          </td>
+
+          <td>
+            <input id="price-${index}" class="form-control" type="number" value="${p.price}">
+          </td>
+
+          <td>
+            <button class="btn btn-success btn-sm" onclick="updateProduct(${index})">Update</button>
             <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p._id}')">Delete</button>
           </td>
         </tr>
       `;
     });
   } catch (err) {
-    console.error("Error loading products:", err);
-    alert("Failed to load products. Check server connection.");
+    console.error("Error:", err);
+    alert("Cannot connect to backend");
   }
 }
 
 loadTable();
 
-// =====================
-// ADD PRODUCT
-// =====================
+// ============================================
+// Add Product
+// ============================================
 async function addProduct() {
-  const name = document.getElementById("pName").value;
-  const price = document.getElementById("pPrice").value;
-  const img = document.getElementById("pImg").value;
+  let name = document.getElementById("pName").value;
+  let price = document.getElementById("pPrice").value;
+  let img = document.getElementById("pImg").value;
 
   if (!name || !price || !img) {
     alert("Please fill all fields!");
@@ -208,63 +173,47 @@ async function addProduct() {
       body: JSON.stringify({ name, price: Number(price), img })
     });
 
-    const data = await res.json();
-    alert(data.message || "Product Added!");
+    alert("Product Added!");
     loadTable();
-
-    document.getElementById("pName").value = "";
-    document.getElementById("pPrice").value = "";
-    document.getElementById("pImg").value = "";
-
   } catch (err) {
-    console.error("Error adding product:", err);
-    alert("Failed to add product.");
+    alert("Add failed");
   }
 }
 
-// =====================
-// UPDATE PRODUCT
-// =====================
-async function updateProduct(id) {
-  const newName = document.getElementById(`name-${id}`).value;
-  const newPrice = document.getElementById(`price-${id}`).value;
+// ============================================
+// Update Product
+// ============================================
+async function updateProduct(index) {
+  let newName = document.getElementById(`name-${index}`).value;
+  let newPrice = document.getElementById(`price-${index}`).value;
 
-  if (!newName || !newPrice) {
-    alert("Name and price required.");
-    return;
-  }
+  const id = products[index]._id;
 
-  try {
-    const res = await fetch(`${API_URL}/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newName, price: Number(newPrice) })
-    });
-
-    const data = await res.json();
-    alert(data.message || "Product Updated!");
+  fetch(`${API_URL}/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: newName, price: Number(newPrice) })
+  })
+  .then(res => res.json())
+  .then(() => {
+    alert("Product Updated!");
     loadTable();
-  } catch (err) {
-    console.error("Error:", err);
-    alert("Update failed.");
-  }
+  })
+  .catch(() => alert("Update failed"));
 }
 
-// =====================
-// DELETE PRODUCT
-// =====================
+// ============================================
+// Delete Product
+// ============================================
 async function deleteProduct(id) {
-  if (!confirm("Delete this product?")) return;
+  if (!confirm("Delete product?")) return;
 
-  try {
-    const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
-    const data = await res.json();
-    alert(data.message || "Product Deleted!");
-    loadTable();
-  } catch (err) {
-    console.error("Error deleting:", err);
-    alert("Delete failed.");
-  }
+  fetch(`${API_URL}/${id}`, { method: "DELETE" })
+    .then(() => {
+      alert("Deleted!");
+      loadTable();
+    })
+    .catch(() => alert("Delete failed"));
 }
 </script>
 
