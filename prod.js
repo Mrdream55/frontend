@@ -15,7 +15,7 @@ updateAuthUI();
    LOAD PRODUCTS FROM SERVER
 ================================*/
 async function loadProducts() {
-  const API_URL = "http://localhost:5000/api/products"; // your server endpoint
+  const API_URL = "https://mongodb-crud-api-khgh.onrender.com/api/products"; // your server endpoint
   try {
     const res = await fetch(API_URL);
     products = await res.json(); // save globally
@@ -102,7 +102,7 @@ async function signUp() {
   if (!email || !pass) return alert("Please fill all fields.");
 
   try {
-    const res = await fetch("http://localhost:5000/api/users", {
+    const res = await fetch("https://mongodb-crud-api-khgh.onrender.com/api/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password: pass }) // optionally add name
@@ -131,7 +131,7 @@ async function signIn() {
   if (!email || !pass) return alert("Please fill all fields.");
 
   try {
-    const res = await fetch("http://localhost:5000/api/login", {
+    const res = await fetch("https://mongodb-crud-api-khgh.onrender.com/api/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password: pass })
